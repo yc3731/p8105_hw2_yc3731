@@ -1,0 +1,64 @@
+---
+title: "p8105 hw2"
+author: "Yue Chen"
+date: "9/24/2020"
+output: github_document
+---
+
+```{r}
+library(tidyverse)
+library(readxl)
+```
+
+Problem 1
+
+Read the Mr. Trashwheel dataset.
+```{r}
+trash_wheel = read_excel("./data/Trash-Wheel-Collection-Totals-8-6-19.xlsx") %>%
+   janitor::clean_names() %>%
+   select(-x15, -x16, -x17) %>%
+   drop_na(dumpster) %>%
+  mutate(
+    sports_balls = round(sports_balls),
+    sports_balls = as.integer(sports_balls)
+  )
+```
+
+Read precipitation data for 2017.
+```{r}
+prcip_2017 = read_excel("./data/Trash-Wheel-Collection-Totals-8-6-19.xlsx", sheet = 6, skip = 1) %>%
+  janitor::clean_names() %>%
+  drop_na(month) %>%
+  mutate(year = 2017)
+```
+
+Read precipitation data for 2018.
+```{r}
+prcip_2018 = read_excel("./data/Trash-Wheel-Collection-Totals-8-6-19.xlsx", sheet = 5, skip = 1) %>%
+  janitor::clean_names() %>%
+  drop_na(month) %>%
+  mutate(year = 2018)
+```
+
+Combine precipitation datasets and convert month to a character variable.
+```{r}
+month_df = 
+  tibble(
+    month = 1:12,
+    month_name = month.name
+  )
+
+prcip_1718 = 
+  bind_rows(prcip_2017, prcip_2018)
+
+left_join(prcip_1718, month_df, by = "month")
+```
+
+The dataset contains information of a water-wheel vessel that removes trash from the Inner Harbor in Baltimore, recording month, year, type of transh each dumpster collects, and weight and volume of trash collected. There are `r nrow(trash_wheel)` obeservations in final dataset.
+The total precipitation in 2018 was `r sum(prcip_2018, pull(prcip_2018, total))`. The median number of sports balls in a dumpster in 2017 was `r median(filter(trash_wheel, pull(trash_wheel, year) == 2017)$sports_balls)`.
+
+
+
+
+
+
