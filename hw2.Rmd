@@ -8,9 +8,10 @@ output: github_document
 ```{r}
 library(tidyverse)
 library(readxl)
+library(dplyr)
 ```
 
-Problem 1
+## Problem 1
 
 Read the Mr. Trashwheel dataset.
 ```{r}
@@ -57,8 +58,41 @@ left_join(prcip_1718, month_df, by = "month")
 The dataset contains information of a water-wheel vessel that removes trash from the Inner Harbor in Baltimore, recording month, year, type of transh each dumpster collects, and weight and volume of trash collected. There are `r nrow(trash_wheel)` obeservations in final dataset.
 The total precipitation in 2018 was `r sum(prcip_2018, pull(prcip_2018, total))`. The median number of sports balls in a dumpster in 2017 was `r median(filter(trash_wheel, pull(trash_wheel, year) == 2017)$sports_balls)`.
 
+## Problem 2
+
+```{r}
+nyc_transit = read_csv("./data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv") %>%
+  janitor::clean_names() %>%
+  dplyr::select(line:route11, entry, vending, entrance_type, ada)
+  mutate(nyc_transit,
+   entry = recode(entry, 'YES' = TRUE, 'NO' = FALSE)
+  )
+```
+
+The dataset contains line, station name, station latitude/longitude, route, entry, entrance type, vending, ADA
+compliance of each subway station in NYC. So far, I have cleaned variable names, removed several variables, 
+and converted entry variable from character to logical variable. There are `r ncol(nyc_transit)` variables and `r nrow(nyc_transit)` observations. These data are not tidy.
+
+There are `r count(distinct(nyc_transit, station_name, line))` distinct stations.
+
+There are `r sum(distinct(nyc_transit, station_name, line, ada)$ada, na.rm = TRUE)` stations that are ADA compliant.
+
+The proportion of station entrances without vending allow entrance is `r nrow(filter(nyc_transit, vending == "NO", entry == 'YES'))/nrow(filter(nyc_transit, vending == "NO"))`.
+
+Reformat data:
+```{r}
+nyc_transit_tidy = 
+  gather(
+    nyc_transit, key = "route_number", value = "route_name", route1:route11
+  )
+```
 
 
 
+There are `r count(distinct(filter(nyc_transit_tidy, route_name == 'A')))` distinct stations serve the A train.
+
+Of the stations that serve the A train, there are `r count(distinct(filter(nyc_transit_tidy, route_name == 'A', ada == TRUE)))` stations that are ADA compliant.
+
+## Problem 3
 
 

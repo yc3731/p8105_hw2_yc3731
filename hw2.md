@@ -24,9 +24,10 @@ library(tidyverse)
 
 ``` r
 library(readxl)
+library(dplyr)
 ```
 
-Problem 1
+## Problem 1
 
 Read the Mr. Trashwheel
 dataset.
@@ -103,4 +104,83 @@ trash from the Inner Harbor in Baltimore, recording month, year, type of
 transh each dumpster collects, and weight and volume of trash collected.
 There are 344 obeservations in final dataset. The total precipitation in
 2018 was 2.44346610^{4}. The median number of sports balls in a dumpster
-in 2017 was 8.
+in 2017 was
+8.
+
+## Problem 2
+
+``` r
+nyc_transit = read_csv("./data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv") %>%
+  janitor::clean_names() %>%
+  dplyr::select(line:route11, entry, vending, entrance_type, ada)
+```
+
+    ## Parsed with column specification:
+    ## cols(
+    ##   .default = col_character(),
+    ##   `Station Latitude` = col_double(),
+    ##   `Station Longitude` = col_double(),
+    ##   Route8 = col_double(),
+    ##   Route9 = col_double(),
+    ##   Route10 = col_double(),
+    ##   Route11 = col_double(),
+    ##   ADA = col_logical(),
+    ##   `Free Crossover` = col_logical(),
+    ##   `Entrance Latitude` = col_double(),
+    ##   `Entrance Longitude` = col_double()
+    ## )
+
+    ## See spec(...) for full column specifications.
+
+``` r
+  mutate(nyc_transit,
+   entry = recode(entry, 'YES' = TRUE, 'NO' = FALSE)
+  )
+```
+
+    ## # A tibble: 1,868 x 19
+    ##    line  station_name station_latitude station_longitu… route1 route2 route3
+    ##    <chr> <chr>                   <dbl>            <dbl> <chr>  <chr>  <chr> 
+    ##  1 4 Av… 25th St                  40.7            -74.0 R      <NA>   <NA>  
+    ##  2 4 Av… 25th St                  40.7            -74.0 R      <NA>   <NA>  
+    ##  3 4 Av… 36th St                  40.7            -74.0 N      R      <NA>  
+    ##  4 4 Av… 36th St                  40.7            -74.0 N      R      <NA>  
+    ##  5 4 Av… 36th St                  40.7            -74.0 N      R      <NA>  
+    ##  6 4 Av… 45th St                  40.6            -74.0 R      <NA>   <NA>  
+    ##  7 4 Av… 45th St                  40.6            -74.0 R      <NA>   <NA>  
+    ##  8 4 Av… 45th St                  40.6            -74.0 R      <NA>   <NA>  
+    ##  9 4 Av… 45th St                  40.6            -74.0 R      <NA>   <NA>  
+    ## 10 4 Av… 53rd St                  40.6            -74.0 R      <NA>   <NA>  
+    ## # … with 1,858 more rows, and 12 more variables: route4 <chr>, route5 <chr>,
+    ## #   route6 <chr>, route7 <chr>, route8 <dbl>, route9 <dbl>, route10 <dbl>,
+    ## #   route11 <dbl>, entry <lgl>, vending <chr>, entrance_type <chr>, ada <lgl>
+
+The dataset contains line, station name, station latitude/longitude,
+route, entry, entrance type, vending, ADA compliance of each subway
+station in NYC. So far, I have cleaned variable names, removed several
+variables, and converted entry variable from character to logical
+variable. There are 19 variables and 1868 observations. These data are
+not tidy.
+
+There are 465 distinct stations.
+
+There are 84 stations that are ADA compliant.
+
+The proportion of station entrances without vending allow entrance is
+0.3770492.
+
+Reformat data:
+
+``` r
+nyc_transit_tidy = 
+  gather(
+    nyc_transit, key = "route_number", value = "route_name", route1:route11
+  )
+```
+
+There are 91 distinct stations serve the A train.
+
+Of the stations that serve the A train, there are 34 stations that are
+ADA compliant.
+
+## Problem 3
