@@ -104,15 +104,17 @@ trash from the Inner Harbor in Baltimore, recording month, year, type of
 transh each dumpster collects, and weight and volume of trash collected.
 There are 344 obeservations in final dataset. The total precipitation in
 2018 was 2.44346610^{4}. The median number of sports balls in a dumpster
-in 2017 was
-8.
+in 2017 was 8.
 
 ## Problem 2
+
+Read and clean the
+data.
 
 ``` r
 nyc_transit = read_csv("./data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv") %>%
   janitor::clean_names() %>%
-  dplyr::select(line:route11, entry, vending, entrance_type, ada)
+  dplyr::select(line:route11, entry, vending, entrance_type, ada) 
 ```
 
     ## Parsed with column specification:
@@ -169,7 +171,7 @@ There are 84 stations that are ADA compliant.
 The proportion of station entrances without vending allow entrance is
 0.3770492.
 
-Reformat data:
+Reformat data.
 
 ``` r
 nyc_transit_tidy = 
@@ -184,3 +186,105 @@ Of the stations that serve the A train, there are 34 stations that are
 ADA compliant.
 
 ## Problem 3
+
+Read and clean the data in
+pols-month.csv.
+
+``` r
+pols_mon = read_csv("./data/fivethirtyeight_datasets/pols-month.csv") %>%
+  janitor::clean_names() %>%
+  separate(col = mon, into = c("year", "month", "day")) %>%
+  mutate(
+    year = as.integer(year),
+    month = as.integer(month),
+    day = as.integer(day),
+    month = month.name[month]) %>%
+  mutate(president = recode(prez_dem, "1" = "dem", "0" = "gop")) %>%
+    select(-prez_gop, -prez_dem, -day)
+```
+
+    ## Parsed with column specification:
+    ## cols(
+    ##   mon = col_date(format = ""),
+    ##   prez_gop = col_double(),
+    ##   gov_gop = col_double(),
+    ##   sen_gop = col_double(),
+    ##   rep_gop = col_double(),
+    ##   prez_dem = col_double(),
+    ##   gov_dem = col_double(),
+    ##   sen_dem = col_double(),
+    ##   rep_dem = col_double()
+    ## )
+
+Read and clean the data in snp.csv.
+
+``` r
+snp = read_csv("./data/fivethirtyeight_datasets/snp.csv") %>%
+  janitor::clean_names() %>%
+  separate(col = date, into = c("month", "day", "year")) %>%
+  mutate(
+    year = as.integer(year),
+    month = as.integer(month),
+    day = as.integer(day),
+    month = month.name[month]) %>%
+  select(year, month, close)
+```
+
+    ## Parsed with column specification:
+    ## cols(
+    ##   date = col_character(),
+    ##   close = col_double()
+    ## )
+
+Read and tidy the unemployment data.
+
+``` r
+unemployment = 
+  read_csv("./data/fivethirtyeight_datasets/unemployment.csv") %>% 
+  pivot_longer(c("Jan":"Dec"),
+               names_to = "month",
+               values_to = "rate") %>% 
+  janitor::clean_names() %>%
+  mutate(
+    month = month.name[match(month, month.abb)],
+    year = as.integer(year))
+```
+
+    ## Parsed with column specification:
+    ## cols(
+    ##   Year = col_double(),
+    ##   Jan = col_double(),
+    ##   Feb = col_double(),
+    ##   Mar = col_double(),
+    ##   Apr = col_double(),
+    ##   May = col_double(),
+    ##   Jun = col_double(),
+    ##   Jul = col_double(),
+    ##   Aug = col_double(),
+    ##   Sep = col_double(),
+    ##   Oct = col_double(),
+    ##   Nov = col_double(),
+    ##   Dec = col_double()
+    ## )
+
+Merge snp and pols datasets.
+
+``` r
+snp_pols = left_join(pols_mon, snp, by = c("year", "month"))
+```
+
+Merge unemployment dataset.
+
+``` r
+snp_pols_une = 
+  left_join(
+    snp_pols, 
+    unemployment,
+    by = c("year", "month")
+  )
+```
+
+The resulting data contains 11 columns and 822 rows, decribing the
+numbers of republican/democratic governors, senators, and repretatives,
+whether the president is democratic or republican, S\&P stock index, and
+unemployment percentage of each month during 1947 and 2015.

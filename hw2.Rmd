@@ -60,10 +60,11 @@ The total precipitation in 2018 was `r sum(prcip_2018, pull(prcip_2018, total))`
 
 ## Problem 2
 
+Read and clean the data.
 ```{r}
 nyc_transit = read_csv("./data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv") %>%
   janitor::clean_names() %>%
-  dplyr::select(line:route11, entry, vending, entrance_type, ada)
+  dplyr::select(line:route11, entry, vending, entrance_type, ada) 
   mutate(nyc_transit,
    entry = recode(entry, 'YES' = TRUE, 'NO' = FALSE)
   )
@@ -79,7 +80,7 @@ There are `r sum(distinct(nyc_transit, station_name, line, ada)$ada, na.rm = TRU
 
 The proportion of station entrances without vending allow entrance is `r nrow(filter(nyc_transit, vending == "NO", entry == 'YES'))/nrow(filter(nyc_transit, vending == "NO"))`.
 
-Reformat data:
+Reformat data.
 ```{r}
 nyc_transit_tidy = 
   gather(
@@ -87,12 +88,68 @@ nyc_transit_tidy =
   )
 ```
 
-
-
 There are `r count(distinct(filter(nyc_transit_tidy, route_name == 'A')))` distinct stations serve the A train.
 
 Of the stations that serve the A train, there are `r count(distinct(filter(nyc_transit_tidy, route_name == 'A', ada == TRUE)))` stations that are ADA compliant.
 
 ## Problem 3
 
+Read and clean the data in pols-month.csv.
 
+```{r}
+pols_mon = read_csv("./data/fivethirtyeight_datasets/pols-month.csv") %>%
+  janitor::clean_names() %>%
+  separate(col = mon, into = c("year", "month", "day")) %>%
+  mutate(
+    year = as.integer(year),
+    month = as.integer(month),
+    day = as.integer(day),
+    month = month.name[month]) %>%
+  mutate(president = recode(prez_dem, "1" = "dem", "0" = "gop")) %>%
+    select(-prez_gop, -prez_dem, -day)
+```
+
+Read and clean the data in snp.csv.
+
+```{r}
+snp = read_csv("./data/fivethirtyeight_datasets/snp.csv") %>%
+  janitor::clean_names() %>%
+  separate(col = date, into = c("month", "day", "year")) %>%
+  mutate(
+    year = as.integer(year),
+    month = as.integer(month),
+    day = as.integer(day),
+    month = month.name[month]) %>%
+  select(year, month, close)
+```
+
+Read and tidy the unemployment data.
+```{r}
+unemployment = 
+  read_csv("./data/fivethirtyeight_datasets/unemployment.csv") %>% 
+  pivot_longer(c("Jan":"Dec"),
+               names_to = "month",
+               values_to = "rate") %>% 
+  janitor::clean_names() %>%
+  mutate(
+    month = month.name[match(month, month.abb)],
+    year = as.integer(year))
+
+```
+
+Merge snp and pols datasets.
+```{r}
+snp_pols = left_join(pols_mon, snp, by = c("year", "month"))
+```
+
+Merge unemployment dataset.
+```{r}
+snp_pols_une = 
+  left_join(
+    snp_pols, 
+    unemployment,
+    by = c("year", "month")
+  )
+```
+
+The resulting data contains `r ncol(snp_pols_une)` columns and `r nrow(snp_pols_une)` rows, decribing the numbers of republican/democratic governors, senators, and repretatives, whether the president is democratic or republican, S&P stock index, and unemployment percentage of each month during 1947 and 2015.
